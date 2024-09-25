@@ -34,9 +34,13 @@ public class SectionDAO {
                 ps.setString(3, num);
                 
                 rs = ps.executeQuery();
+                int rowCount = 0;
+                while (rs.next()){
+                    rowCount++;
+                }
+                System.out.println("Number of Sections found: " + rowCount);
                 
-                
-                
+                rs.beforeFirst();
                 result = DAOUtility.getResultSetAsJson(rs);
                 
                 
