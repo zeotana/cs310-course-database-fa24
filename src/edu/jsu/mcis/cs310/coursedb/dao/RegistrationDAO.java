@@ -97,10 +97,10 @@ public class RegistrationDAO {
         boolean result = false;
         
         PreparedStatement ps = null;
-        
+        Connection conn = null;
         try {
             
-            Connection conn = daoFactory.getConnection();
+           conn = daoFactory.getConnection();
             
             if (conn.isValid(0)) {
                 String query = "DELETE FROM registration WHERE studentid = ? AND termid = ?";
@@ -122,6 +122,8 @@ public class RegistrationDAO {
 
             if (ps != null) { try { ps.close(); } catch (Exception e) { e.printStackTrace(); } }
             
+        }if (conn != null) {
+            try { conn.close(); } catch (Exception e) { e.printStackTrace(); }
         }
         
         return result;
@@ -141,8 +143,18 @@ public class RegistrationDAO {
             Connection conn = daoFactory.getConnection();
             
             if (conn.isValid(0)) {
+                String sql = "SELECT course_name, grade FROM enrollments WHERE student_id = ? AND term_id = ?";
+                ps = conn.prepareStatement(sql);
+                ps.setInt(1, studentid);
+                ps.setInt(2, termid);
+                rs = ps.executeQuery();
                 
-                // INSERT YOUR CODE HERE
+                StringBuilder sb = new StringBuilder();
+                while (rs.next()) {
+                    sb.append(rs.getString("course_name")).append(": ").append(rs.getString("grade")).append("\n");
+                }
+                result = sb.toString();
+                                
                 
             }
             

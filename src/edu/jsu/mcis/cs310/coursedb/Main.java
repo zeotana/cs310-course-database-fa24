@@ -25,8 +25,6 @@ public class Main {
             
             System.out.println("Connected Successfully!");
             
-        }else {
-            System.out.println("Failed to connect.");
              
         }
         

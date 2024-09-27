@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import com.github.cliftonlabs.json_simple.JsonArray;
+import com.github.cliftonlabs.json_simple.JsonObject;
 
 public class SectionDAO {
     
@@ -21,31 +23,42 @@ public class SectionDAO {
         
         PreparedStatement ps = null;
         ResultSet rs = null;
-        ResultSetMetaData rsmd = null;
+        
         
         try {
-            
-            Connection conn = daoFactory.getConnection();
-            
-            if (conn.isValid(0)) {
-                ps = conn.prepareStatement(QUERY_FIND);
-                ps.setInt(1, termid);
-                ps.setString(2, subjectid);
-                ps.setString(3, num);
-                
-                rs = ps.executeQuery();
-                int rowCount = 0;
-                while (rs.next()){
-                    rowCount++;
-                }
-                System.out.println("Number of Sections found: " + rowCount);
-                
-                rs.beforeFirst();
-                result = DAOUtility.getResultSetAsJson(rs);
-                
-                
-            }
-            
+             Connection conn = daoFactory.getConnection();
+             
+             if(conn.isValid(0)){
+                 ps = conn.prepareStatement(QUERY_FIND);
+                 ps.setInt(1, termid);
+                 ps.setString(2, subjectid);
+                 ps.setString(3, num);
+                 rs = ps.executeQuery();
+                 
+                 ResultSetMetaData rsmd = rs.getMetaData();
+                 int columnCount = rsmd.getColumnCount();
+                 
+                 JsonArray jsonArray = new JsonArray();
+                 
+                 while (rs.next()){
+                     JsonObject jsonObject = new JsonObject();
+                     
+                     for (int i = 1; i <= columnCount; i++){
+                         String columnName = rsmd.getColumnName(i);
+                         Object columnValue = rs.getObject(i);
+                         jsonObject.put(columnName, columnValue != null ? columnValue : "");
+                     }
+                     jsonArray.add(jsonObject);
+                 }
+                 result = jsonArray.toString();
+             }
+        
+        
+        
+        
+        
+        
+        
         }
         
         catch (Exception e) { e.printStackTrace(); }
