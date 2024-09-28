@@ -6,10 +6,20 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
 import java.sql.SQLException;
+import com.github.cliftonlabs.json_simple.JsonArray;
+import com.github.cliftonlabs.json_simple.JsonObject;
 
 public class RegistrationDAO {
     
     private final DAOFactory daoFactory;
+    
+    private final String QUERY_CREATE = "INSERT INTO registration (studentid, termid, crn) VALUES (?, ?, ?)";
+    
+    private final String QUERY_DELETEALL = "DELETE FROM registration WHERE termid = ? AND studentid = ?";
+    
+    private final String QUERY_DELETE = "DELETE FROM registration WHERE termid = ? AND studentid = ? AND CRN = ?";
+    
+    private final String QUERY_SELECT = "SELECT * FROM registration WHERE studentid = ? AND termid = ? ORDER BY crn";
     
     RegistrationDAO(DAOFactory daoFactory) {
         this.daoFactory = daoFactory;
@@ -27,8 +37,7 @@ public class RegistrationDAO {
 
         if (conn.isValid(0)) {
 
-            String query = "INSERT INTO registration (studentid, termid, crn) VALUES (?, ?, ?)";
-            ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            ps = conn.prepareStatement(QUERY_CREATE);
             ps.setInt(1, studentid);
             ps.setInt(2, termid);
             ps.setInt(3, crn);
@@ -36,17 +45,16 @@ public class RegistrationDAO {
             int updateCount = ps.executeUpdate();
 
             if (updateCount > 0) {
-                rs = ps.getGeneratedKeys();
                 result = true; // Indicate successful insertion
             }
 
         }
 
     } 
-    catch (SQLException e) { e.printStackTrace(); } 
+    catch (Exception e) { e.printStackTrace(); } 
     finally {
-        if (rs != null) { try { rs.close(); } catch (SQLException e) { e.printStackTrace(); } }
-        if (ps != null) { try { ps.close(); } catch (SQLException e) { e.printStackTrace(); } }
+         if (rs != null) { try{rs.close();} catch (Exception e){e.printStackTrace();}}
+         if (ps != null) { try{ps.close();} catch (Exception e){e.printStackTrace();}}
     }
 
     return result;
@@ -63,15 +71,17 @@ public class RegistrationDAO {
             Connection conn = daoFactory.getConnection();
             
             if (conn.isValid(0)) {
-                String query = "DELETE FROM registration WHERE studentid = ? AND termid = ? AND crn = ?";
-                ps = conn.prepareStatement(query);
+                ps = conn.prepareStatement(QUERY_DELETE);
                 ps.setInt(1, studentid);
                 ps.setInt(2, termid);
                 ps.setInt(3, crn);
                 
                 // execute update
-                int affectedRows = ps.executeUpdate();
-               result = (affectedRows > 0);
+                int updateCount = ps.executeUpdate();
+                if (updateCount > 0){
+                    result = true;
+                }
+               
             
                
                 
@@ -96,14 +106,13 @@ public class RegistrationDAO {
         boolean result = false;
         
         PreparedStatement ps = null;
-        Connection conn = null;
+        
         try {
             
-           conn = daoFactory.getConnection();
+          Connection conn = daoFactory.getConnection();
             
             if (conn.isValid(0)) {
-                String query = "DELETE FROM registration WHERE studentid = ? AND termid = ?";
-                ps = conn.prepareStatement(query);
+                ps = conn.prepareStatement(QUERY_DELETEALL);
                 ps.setInt(1, studentid);
                 ps.setInt(2, termid);
                 
@@ -123,8 +132,7 @@ public class RegistrationDAO {
 
             if (ps != null) { try { ps.close(); } catch (Exception e) { e.printStackTrace(); } }
             
-        }if (conn != null) {
-            try { conn.close(); } catch (Exception e) { e.printStackTrace(); }
+       
         }
         
         return result;
@@ -144,13 +152,26 @@ public class RegistrationDAO {
             Connection conn = daoFactory.getConnection();
             
             if (conn.isValid(0)) {
-                String sql = "SELECT course_name, grade FROM enrollments WHERE student_id = ? AND term_id = ?";
-                ps = conn.prepareStatement(sql);
+                ps = conn.prepareStatement(QUERY_SELECT);
                 ps.setInt(1, studentid);
                 ps.setInt(2, termid);
-                rs = ps.executeQuery();
+                boolean hasresults = ps.execute();
+                if(hasresults){
+                    rs = ps.getResultSet();
+                    
+                    while(rs.next()){
+                        JsonObject student_id = new JsonObject();
+                        JsonObject term_id = new JsonObject();
+                        JsonArray RegistrationArray = new JsonArray();
+                        student_id.put("studentid", rs.getInt(studentid));
+                        term_id.put("termid", rs.getInt(termid));
+                        RegistrationArray.add(student_id);
+                        RegistrationArray.add(term_id);
+                        
+                        result = RegistrationArray.toString();
+                    }
+                }
                 
-                result = DAOUtility.getResultSetAsJson(rs);
 
             }
             

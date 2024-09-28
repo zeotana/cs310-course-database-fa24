@@ -22,7 +22,8 @@ public class SectionDAO {
     String result = "[]";
     PreparedStatement ps = null;
     ResultSet rs = null;
-
+    JsonArray jsonArray = new JsonArray();
+    
     try {
 
         Connection conn = daoFactory.getConnection();
@@ -39,24 +40,19 @@ public class SectionDAO {
             if (hasResults) {
 
                 rs = ps.getResultSet();
-                ResultSetMetaData rsmd = rs.getMetaData();
-                int columnCount = rsmd.getColumnCount();
-
-                JsonArray jsonArray = new JsonArray();
+           
 
                 while (rs.next()) {
                     JsonObject jsonObject = new JsonObject();
-
-                    for (int i = 1; i <= columnCount; i++) {
-                        String columnName = rsmd.getColumnName(i);
-                        Object columnValue = rs.getObject(i);
-                        jsonObject.put(columnName, columnValue);
-                    }
+                    jsonObject.put("termid", rs.getInt("termid"));
+                    jsonObject.put("subjectid", rs.getString("subjectid"));
+                    jsonObject.put("num", rs.getString("num"));
 
                     jsonArray.add(jsonObject);
+                    result = jsonArray.toString();
                 }
 
-                result = jsonArray.toString();
+               
             }
 
         }
