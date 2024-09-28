@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import java.sql.SQLException;
 
 public class RegistrationDAO {
     
@@ -14,44 +15,42 @@ public class RegistrationDAO {
         this.daoFactory = daoFactory;
     }
     
-    public boolean create(int studentid, int termid, int crn) {
-        
-        boolean result = false;
-        
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        
-        try {
-            
-            Connection conn = daoFactory.getConnection();
-            
-            if (conn.isValid(0)) {
-                String query = "INSERT INTO registration (studentid, termid, crn)VALUES (?, ?, ?)";
-                ps = conn.prepareStatement(query);
-                ps.setInt(1, studentid);
-                ps.setInt(2, termid);
-                ps.setInt(3, crn);
-                // Execute the update
-                int affectedRows = ps.executeUpdate();
-                result = (affectedRows > 0); // if insertion was a success
-               
-                
+   public boolean create(int studentid, int termid, int crn) {
+
+    boolean result = false;
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+
+        Connection conn = daoFactory.getConnection();
+
+        if (conn.isValid(0)) {
+
+            String query = "INSERT INTO registration (studentid, termid, crn) VALUES (?, ?, ?)";
+            ps = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, studentid);
+            ps.setInt(2, termid);
+            ps.setInt(3, crn);
+
+            int updateCount = ps.executeUpdate();
+
+            if (updateCount > 0) {
+                rs = ps.getGeneratedKeys();
+                result = true; // Indicate successful insertion
             }
-            
+
         }
-        
-        catch (Exception e) { e.printStackTrace(); }
-        
-        finally {
-            
-            if (rs != null) { try { rs.close(); } catch (Exception e) { e.printStackTrace(); } }
-            if (ps != null) { try { ps.close(); } catch (Exception e) { e.printStackTrace(); } }
-            
-        }
-        
-        return result;
-        
+
+    } 
+    catch (SQLException e) { e.printStackTrace(); } 
+    finally {
+        if (rs != null) { try { rs.close(); } catch (SQLException e) { e.printStackTrace(); } }
+        if (ps != null) { try { ps.close(); } catch (SQLException e) { e.printStackTrace(); } }
     }
+
+    return result;
+}
 
     public boolean delete(int studentid, int termid, int crn) {
         
@@ -72,7 +71,7 @@ public class RegistrationDAO {
                 
                 // execute update
                 int affectedRows = ps.executeUpdate();
-                result = (affectedRows > 0);
+               result = (affectedRows > 0);
             
                
                 
@@ -109,8 +108,10 @@ public class RegistrationDAO {
                 ps.setInt(2, termid);
                 
                 // execute update
-                int affectedRows = ps.executeUpdate();
-                result = (affectedRows > 0);
+                int updateCount = ps.executeUpdate();
+                if (updateCount > 0) {
+                result = true;
+            }
                 
             }
             
@@ -132,7 +133,7 @@ public class RegistrationDAO {
 
     public String list(int studentid, int termid) {
         
-        String result = null;
+        String result = null; 
         
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -149,13 +150,8 @@ public class RegistrationDAO {
                 ps.setInt(2, termid);
                 rs = ps.executeQuery();
                 
-                StringBuilder sb = new StringBuilder();
-                while (rs.next()) {
-                    sb.append(rs.getString("course_name")).append(": ").append(rs.getString("grade")).append("\n");
-                }
-                result = sb.toString();
-                                
-                
+                result = DAOUtility.getResultSetAsJson(rs);
+
             }
             
         }

@@ -32,12 +32,13 @@ public class DAOUtility {
             }
             
         }
-        catch (Exception e) {
-            e.printStackTrace();
+        catch (SQLException e) {
+            
         }
         
-        return Jsoner.serialize(records);
-        
+       String jsonResult = Jsoner.serialize(records);
+       System.out.println("Generated JSON: " + jsonResult);  // Debugging output
+       return jsonResult;
     }
     
 }

@@ -18,60 +18,58 @@ public class SectionDAO {
     }
     
     public String find(int termid, String subjectid, String num) {
-        
-        String result = "[]";
-        
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        
-        
-        try {
-             Connection conn = daoFactory.getConnection();
-             
-             if(conn.isValid(0)){
-                 ps = conn.prepareStatement(QUERY_FIND);
-                 ps.setInt(1, termid);
-                 ps.setString(2, subjectid);
-                 ps.setString(3, num);
-                 rs = ps.executeQuery();
-                 
-                 ResultSetMetaData rsmd = rs.getMetaData();
-                 int columnCount = rsmd.getColumnCount();
-                 
-                 JsonArray jsonArray = new JsonArray();
-                 
-                 while (rs.next()){
-                     JsonObject jsonObject = new JsonObject();
-                     
-                     for (int i = 1; i <= columnCount; i++){
-                         String columnName = rsmd.getColumnName(i);
-                         Object columnValue = rs.getObject(i);
-                         jsonObject.put(columnName, columnValue != null ? columnValue : "");
-                     }
-                     jsonArray.add(jsonObject);
-                 }
-                 result = jsonArray.toString();
-             }
-        
-        
-        
-        
-        
-        
-        
+
+    String result = "[]";
+    PreparedStatement ps = null;
+    ResultSet rs = null;
+
+    try {
+
+        Connection conn = daoFactory.getConnection();
+
+        if (conn.isValid(0)) {
+
+            ps = conn.prepareStatement(QUERY_FIND);
+            ps.setInt(1, termid);
+            ps.setString(2, subjectid);
+            ps.setString(3, num);
+
+            boolean hasResults = ps.execute();
+
+            if (hasResults) {
+
+                rs = ps.getResultSet();
+                ResultSetMetaData rsmd = rs.getMetaData();
+                int columnCount = rsmd.getColumnCount();
+
+                JsonArray jsonArray = new JsonArray();
+
+                while (rs.next()) {
+                    JsonObject jsonObject = new JsonObject();
+
+                    for (int i = 1; i <= columnCount; i++) {
+                        String columnName = rsmd.getColumnName(i);
+                        Object columnValue = rs.getObject(i);
+                        jsonObject.put(columnName, columnValue);
+                    }
+
+                    jsonArray.add(jsonObject);
+                }
+
+                result = jsonArray.toString();
+            }
+
         }
-        
-        catch (Exception e) { e.printStackTrace(); }
-        
-        finally {
-            
-            if (rs != null) { try { rs.close(); } catch (Exception e) { e.printStackTrace(); } }
-            if (ps != null) { try { ps.close(); } catch (Exception e) { e.printStackTrace(); } }
-            
-        }
-        
-        return result;
-        
+
+    } 
+    catch (Exception e) { e.printStackTrace(); } 
+    finally {
+
+        if (rs != null) { try { rs.close(); } catch (Exception e) { e.printStackTrace(); } }
+        if (ps != null) { try { ps.close(); } catch (Exception e) { e.printStackTrace(); } }
+
     }
-    
-}
+
+    return result;
+
+}}
